@@ -1,6 +1,8 @@
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import {TaskModel} from './models/TaskModel'
+import { CreateTaskModel } from "./models/CreateTaskModel";
 
 const getDayOfWeek = () => {
   const date = new Date();
@@ -19,20 +21,42 @@ const getFullDate = () => {
 
 const ToDoList = () => {
 
-  const [tasks, setTasks] = useState<string[]>(["coding"]);
+  const [tasks, setTasks] = useState<TaskModel[]>([{id: 0, name: "coding"}]);
   const [checkedState, setCheckedState] = useState(new Array(tasks.length).fill(false));
-  const [newTask, setNewTask] = useState<string>("");
+  const [newTask, setNewTask] = useState<CreateTaskModel>({name : ''});
+
+  useEffect(() => {
+    getData()
+    }, [])
+
+  const getData = () => {
+    fetch('http://localhost:3000/')
+    .then(response => response.json())
+    .then(data => setTasks(data));
+  }  
 
   const addTask = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setTasks([...tasks, newTask]);
-    setNewTask("");
+    fetch('http://localhost:3000/add', {
+      method: 'POST',
+      headers:{
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newTask)
+    })
+    .then(response => response.json())
+    .catch(error => console.log(error))
+    .finally(() => {
+      getData()
+      setNewTask({name: ""})
+    })
   }
 
-  const removeTask = (index: number) => {
-    const updatedList = tasks.filter((_, idx) => idx !== index );
-    setTasks(updatedList);
-  }
+  // const removeTask = (index: number) => {
+  //   const updatedList = tasks.filter((_, idx) => idx !== index );
+  //   setTasks(updatedList);
+  // }
 
   const handleCheckboxChange = (index: number) => {
     const updatedCheckedState = checkedState.map((item, idx) => 
@@ -61,14 +85,14 @@ const ToDoList = () => {
                 <input 
                 type="checkbox" 
                 id={`task-${index}`} 
-                name={task} value={task} 
+                name={task.name} value={task.name} 
                 onChange={() => handleCheckboxChange(index)} 
                 checked={checkedState[index]}/>
-                {task}
+                {task.name}
               </label>
               <div>
                 <EditIcon />
-                <DeleteIcon onClick={() =>removeTask(index)}/>
+                <DeleteIcon/>
               </div>
             </div> 
             )}
@@ -78,8 +102,8 @@ const ToDoList = () => {
                   <input 
                     type="text" 
                     name="newTask" 
-                    value={newTask} 
-                    onChange={(event)=> setNewTask(event?.target.value)} 
+                    value={newTask.name} 
+                    onChange={(event)=> setNewTask({name: event?.target.value})} 
                   />
                   <button type="submit">Add</button>
                 </form>
