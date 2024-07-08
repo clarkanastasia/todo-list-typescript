@@ -49,4 +49,16 @@ router.delete("/delete/:id", async (req: Request, res: Response) => {
 	}
 }) 
 
+router.put("/update/:id", async (req: Request, res: Response) => {
+	const taskId = parseInt(req.params.id);
+	const task = req.body.name;
+	try{
+		await pool.query("UPDATE tasks SET name = $1 WHERE id = $2", [task, taskId]);
+		res.sendStatus(200);
+	} catch (error) {
+		console.error("Error updating task", error);
+		res.status(500).json({error: "Error updating task"})
+	}
+})
+
 export default router

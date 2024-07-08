@@ -3,6 +3,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {TaskModel} from './models/TaskModel'
 import { CreateTaskModel } from "./models/CreateTaskModel";
+import { UpdateTaskModel } from "./models/UpdateTaskModel";
 
 const getDayOfWeek = () => {
   const date = new Date();
@@ -24,6 +25,8 @@ const ToDoList = () => {
   const [tasks, setTasks] = useState<TaskModel[]>([{id: 0, name: "coding"}]);
   const [checkedState, setCheckedState] = useState(new Array(tasks.length).fill(false));
   const [newTask, setNewTask] = useState<CreateTaskModel>({name : ''});
+  const [isEditing, setIsEditing] = useState<number | null>(null);
+  const [editText, setEditText] = useState<UpdateTaskModel>({name: ''});
 
   useEffect(() => {
     getData()
@@ -60,6 +63,27 @@ const ToDoList = () => {
     .finally(() => getData())
   }
 
+  const updateTask = (id: number) => {
+    fetch(`http://localhost:3000/update/${id}`, {
+      method: 'PUT',
+      headers:{
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editText)})
+      .catch(error => console.log(error))
+      .finally(() => {
+        setIsEditing(null);
+        setEditText({name: ''})
+        getData();
+      })
+  }
+
+  const handleEdit = (index: number) => {
+    setIsEditing(index);
+    setEditText({name: tasks[index].name});
+};
+
   const handleCheckboxChange = (index: number) => {
     const updatedCheckedState = checkedState.map((item, idx) => 
       idx === index ? !item : item
@@ -83,19 +107,29 @@ const ToDoList = () => {
           <div className="tasks">
             {tasks.map((task, index) => 
             <div key={task.id} className={`checkBox ${checkedState[index] ? 'checked' : ''}`}>
-              <label>
                 <input 
                 type="checkbox" 
                 id={`task-${task.id}`} 
-                name={task.name} value={task.name} 
+                name={task.name} 
+                value={task.name} 
                 onChange={() => handleCheckboxChange(index)} 
-                checked={checkedState[index]}/>
-                {task.name}
-              </label>
-              <div>
-                <EditIcon />
-                <DeleteIcon onClick={()=> removeTask(task.id)} />
-              </div>
+                checked={checkedState[index]}
+                />
+                {isEditing === index ? (
+                        <input
+                            type="text"
+                            value={editText.name}
+                            onChange={(e) => setEditText({name: e.target.value})}
+                        />
+                    ) : (
+                      <label htmlFor={`task-${task.id}`}>{task.name}</label>
+                    )}
+                {isEditing === index ? (
+                        <button onClick={() => updateTask(task.id)}>Update</button>
+                    ) : ( <div>
+                      <EditIcon onClick={() => handleEdit(index)} />
+                      <DeleteIcon onClick={()=> removeTask(task.id)} />
+                    </div>)}
             </div> 
             )}
           </div>
