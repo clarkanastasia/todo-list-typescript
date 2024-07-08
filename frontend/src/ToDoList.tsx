@@ -53,10 +53,12 @@ const ToDoList = () => {
     })
   }
 
-  // const removeTask = (index: number) => {
-  //   const updatedList = tasks.filter((_, idx) => idx !== index );
-  //   setTasks(updatedList);
-  // }
+  const removeTask = (id: number) => {
+    fetch(`http://localhost:3000/delete/${id}`, {
+      method: 'DELETE'})
+    .catch(error => console.log(error))
+    .finally(() => getData())
+  }
 
   const handleCheckboxChange = (index: number) => {
     const updatedCheckedState = checkedState.map((item, idx) => 
@@ -80,11 +82,11 @@ const ToDoList = () => {
           </div>
           <div className="tasks">
             {tasks.map((task, index) => 
-            <div key={index} className={`checkBox ${checkedState[index] ? 'checked' : ''}`}>
+            <div key={task.id} className={`checkBox ${checkedState[index] ? 'checked' : ''}`}>
               <label>
                 <input 
                 type="checkbox" 
-                id={`task-${index}`} 
+                id={`task-${task.id}`} 
                 name={task.name} value={task.name} 
                 onChange={() => handleCheckboxChange(index)} 
                 checked={checkedState[index]}/>
@@ -92,7 +94,7 @@ const ToDoList = () => {
               </label>
               <div>
                 <EditIcon />
-                <DeleteIcon/>
+                <DeleteIcon onClick={()=> removeTask(task.id)} />
               </div>
             </div> 
             )}

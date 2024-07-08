@@ -35,4 +35,18 @@ router.post("/add", async (req: Request, res: Response) => {
 	}
 });
 
+router.delete("/delete/:id", async (req: Request, res: Response) => {
+	const taskId = parseInt(req.params.id);
+	if (isNaN(taskId)) {
+		return res.status(400).json({error: "Invalid task id"});
+	}
+	try{
+		await pool.query("DELETE FROM tasks WHERE id = $1", [taskId]);
+		res.sendStatus(200);
+	}catch (error){
+		console.error("Error deleting task", error);
+		res.status(500).json({error: "Error deleting task"});
+	}
+}) 
+
 export default router
