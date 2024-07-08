@@ -8,6 +8,10 @@ interface Task {
 	name: string;
 }
 
+interface NewTask {
+	name: string;
+}
+
 router.get("/", async (req: Request, res: Response) => {
 	try {
 		const result = await pool.query("SELECT * FROM tasks");
@@ -16,6 +20,18 @@ router.get("/", async (req: Request, res: Response) => {
 	} catch (error) {
 		console.error("Error fetching tasks", error);
 		res.status(500).json({ error: "Error fetching tasks" });
+	}
+});
+
+router.post("/add", async (req: Request, res: Response) => {
+	const task = req.body.name;
+	try {
+		const result = await pool.query("INSERT INTO tasks (name) VALUES ($1)", [task]);
+		const newTask: NewTask = result.rows[0];
+		res.status(201).json({message: 'Post request succesful', task: newTask})
+	} catch(error){
+		console.error("Error adding todo", error);
+		res.status(500).json({error: "Error adding task"})
 	}
 });
 
