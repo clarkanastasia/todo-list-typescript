@@ -3,7 +3,10 @@ import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./redux/store";
 import { setNewTask, clearNewTask } from "./redux/newTask";
-import { add } from "./redux/taskList";
+import { setTaskList } from "./redux/taskList";
+import { useEffect, useState } from "react";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 
 const getDayOfWeek = () => {
   const date = new Date();
@@ -20,26 +23,109 @@ const getFullDate = () => {
   return `${day} ${month} ${year}`;
 };
 
+interface UpdateTaskModel {
+  name: string,
+}
 export default function App() {
 
   const tasks = useSelector((state: RootState) => state.taskList.value)
   const newTask = useSelector((state: RootState) => state.newTask.value)
   const dispatch = useDispatch();
 
+  const [editText, setEditText] = useState<UpdateTaskModel>({name: ''});
+  const [isEditing, setIsEditing] = useState<number | null>(null);
+
+  useEffect(() => {
+    getData()
+    }, [])
+
+  const getData = () => {
+    fetch('http://localhost:3000/')
+    .then(response => response.json())
+    .then(data => dispatch(setTaskList(data)));
+  }  
+
+  const addTask = () => {
+    fetch('http://localhost:3000/add', {
+      method: 'POST',
+      headers:{
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newTask)
+    })
+    .then(response => response.json())
+    .catch(error => console.log(error))
+    .finally(() => {
+      getData()
+      dispatch(clearNewTask());
+    })
+  }
+
+  const removeTask = (id: number) => {
+    fetch(`http://localhost:3000/delete/${id}`, {
+      method: 'DELETE'})
+    .catch(error => console.log(error))
+    .finally(() => getData())
+  }
+
+  const updateTask = (id: number) => {
+    fetch(`http://localhost:3000/update/${id}`, {
+      method: 'PUT',
+      headers:{
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(editText)})
+      .catch(error => console.log(error))
+      .finally(() => {
+        setIsEditing(null);
+        setEditText({name: ''})
+        getData();
+      })
+  }
+
+  const handleEdit = (index: number) => {
+    setIsEditing(index);
+    setEditText({name: tasks[index].name});
+};
+
   return (
     <View style={styles.container}>
+
       <Text style={styles.title}>To-Do List</Text>
       <Text style={styles.subtitle}>{getDayOfWeek()}, {getFullDate()}</Text>
-      <Text style={styles.subtitle}>You have {tasks.length} tasks today</Text>
+      <Text style={styles.subtitle}>You have {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} today</Text>
 
-    <View>
+    <View style={styles.taskList}>
       <FlatList 
         data={tasks}
         renderItem={({item, index}) =>
-        <BouncyCheckbox 
-        key={index}
-        text={item}
-        />}
+          <View style={styles.checkbox}>
+          {isEditing === index ? 
+            (<TextInput 
+              value={editText.name}
+              onChangeText={input => setEditText({name: input})}
+            />)
+          :
+            (<BouncyCheckbox 
+              key={index}
+              text={item.name}
+              />)
+          }
+          {isEditing === index ? 
+            (<Button
+              title = "Update" 
+              onPress={() => updateTask(item.id)}
+              />)
+          :
+            (<View style={{flexDirection: 'row'}}>
+              <EditIcon onClick={() => handleEdit(index)} />
+              <DeleteIcon onClick={()=> removeTask(item.id)} />
+            </View>)
+          }
+        </View>
+        }
       />
       </View>
 
@@ -50,12 +136,8 @@ export default function App() {
         value={newTask.name}
         />
       <Button
-      title="Add" 
-      onPress={() => {
-        dispatch(add(newTask.name));
-        dispatch(clearNewTask());
-      }
-      }
+        title="Add" 
+        onPress={addTask}
       />
       </View>
 
@@ -77,8 +159,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     marginBottom: 10,
   },
-  checkbox: {
+  taskList: {
     marginBottom: 10,
+  },
+  checkbox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   inputContainer: {
     flexDirection: 'row',
