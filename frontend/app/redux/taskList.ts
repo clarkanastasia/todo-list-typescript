@@ -1,9 +1,5 @@
 import {createSlice} from "@reduxjs/toolkit";
-
-export interface TaskModel {
-  id: number, 
-  name: string,
-}
+import {TaskModel} from "../../models/TaskModel"
 
 interface taskListState{
   value: TaskModel[]

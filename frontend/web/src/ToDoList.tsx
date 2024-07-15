@@ -1,24 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import {TaskModel} from './models/TaskModel'
-import { CreateTaskModel } from "./models/CreateTaskModel";
-import { UpdateTaskModel } from "./models/UpdateTaskModel";
-
-const getDayOfWeek = () => {
-  const date = new Date();
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return dayNames[date.getDay()];
-};
-
-const getFullDate = () => {
-  const date = new Date();
-  const day = date.getDate();
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-};
+import {TaskModel} from '../../models/TaskModel'
+import { CreateTaskModel } from "../../models/CreateTaskModel";
+import { UpdateTaskModel } from "../../models/UpdateTaskModel";
+import {getTasksRequest, addTaskRequest, removeTaskRequest, updateTaskRequest} from "../../api/backendClient"
+import {getDayOfWeek, getFullDate} from "../../api/dateClient"
 
 const ToDoList = () => {
 
@@ -33,21 +20,14 @@ const ToDoList = () => {
     }, [])
 
   const getData = () => {
-    fetch('http://localhost:3000/')
+    getTasksRequest()
     .then(response => response.json())
     .then(data => setTasks(data));
   }  
 
   const addTask = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    fetch('http://localhost:3000/add', {
-      method: 'POST',
-      headers:{
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newTask)
-    })
+    addTaskRequest(newTask)
     .then(response => response.json())
     .catch(error => console.log(error))
     .finally(() => {
@@ -57,20 +37,13 @@ const ToDoList = () => {
   }
 
   const removeTask = (id: number) => {
-    fetch(`http://localhost:3000/delete/${id}`, {
-      method: 'DELETE'})
+    removeTaskRequest(id)
     .catch(error => console.log(error))
     .finally(() => getData())
   }
 
   const updateTask = (id: number) => {
-    fetch(`http://localhost:3000/update/${id}`, {
-      method: 'PUT',
-      headers:{
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(editText)})
+      updateTaskRequest(id, editText)
       .catch(error => console.log(error))
       .finally(() => {
         setIsEditing(null);

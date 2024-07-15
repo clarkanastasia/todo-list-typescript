@@ -1,7 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
+import {CreateTaskModel} from "../../models/CreateTaskModel"
 
 interface newTaskState {
-  value: {name: string}
+  value: CreateTaskModel
 }
 
 const initialState: newTaskState = {value: {name: ""}}

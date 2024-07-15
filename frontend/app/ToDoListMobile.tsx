@@ -1,31 +1,16 @@
 import { View, Text, TextInput, Button, FlatList, StyleSheet} from "react-native";
+import { useEffect, useState } from "react";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "./redux/store";
 import { setNewTask, clearNewTask } from "./redux/newTask";
 import { setTaskList } from "./redux/taskList";
-import { useEffect, useState } from "react";
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { UpdateTaskModel } from '../models/UpdateTaskModel'
+import {getDayOfWeek, getFullDate} from './dateClient'
+import {addTaskRequest, getTasksRequest, removeTaskRequest, updateTaskRequest} from './backendClient'
 
-const getDayOfWeek = () => {
-  const date = new Date();
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  return dayNames[date.getDay()];
-};
-
-const getFullDate = () => {
-  const date = new Date();
-  const day = date.getDate();
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
-  return `${day} ${month} ${year}`;
-};
-
-interface UpdateTaskModel {
-  name: string,
-}
 export default function App() {
 
   const tasks = useSelector((state: RootState) => state.taskList.value)
@@ -40,20 +25,13 @@ export default function App() {
     }, [])
 
   const getData = () => {
-    fetch('http://localhost:3000/')
+    getTasksRequest()
     .then(response => response.json())
     .then(data => dispatch(setTaskList(data)));
   }  
 
   const addTask = () => {
-    fetch('http://localhost:3000/add', {
-      method: 'POST',
-      headers:{
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newTask)
-    })
+    addTaskRequest(newTask)
     .then(response => response.json())
     .catch(error => console.log(error))
     .finally(() => {
@@ -63,26 +41,19 @@ export default function App() {
   }
 
   const removeTask = (id: number) => {
-    fetch(`http://localhost:3000/delete/${id}`, {
-      method: 'DELETE'})
+    removeTaskRequest(id)
     .catch(error => console.log(error))
     .finally(() => getData())
   }
 
   const updateTask = (id: number) => {
-    fetch(`http://localhost:3000/update/${id}`, {
-      method: 'PUT',
-      headers:{
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(editText)})
-      .catch(error => console.log(error))
-      .finally(() => {
-        setIsEditing(null);
-        setEditText({name: ''})
-        getData();
-      })
+    updateTaskRequest(id, editText)
+    .catch(error => console.log(error))
+    .finally(() => {
+      setIsEditing(null);
+      setEditText({name: ''})
+      getData();
+    })
   }
 
   const handleEdit = (index: number) => {
